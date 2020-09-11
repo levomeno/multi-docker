@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t levomeno/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true levomeno/react-test npm run test
+
+after_success:
+  - docker build -t levomeno/multi-client ./client
+  - docker build -t levomeno/multi-nginx ./nginx
+  - docker build -t levomeno/multi-server ./server
+  - docker build -t levomeno/multi-worker ./worker
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push levomeno/multi-client
+  - docker push levomeno/multi-nginx
+  - docker push levomeno/multi-server
+  - docker push levomeno/multi-worker
